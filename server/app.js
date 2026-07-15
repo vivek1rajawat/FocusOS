@@ -17,9 +17,15 @@ const searchRoutes = require('./routes/search.routes');
 
 const app = express();
 
+// CLIENT_URL may be a comma-separated list — Vercel serves the same deployment from multiple
+// origins (production alias, git-branch alias, per-commit URL), and all of them need to pass CORS.
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim());
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
     exposedHeaders: ['X-Conversation-Id'],
   })

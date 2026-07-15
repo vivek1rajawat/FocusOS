@@ -4,6 +4,9 @@ import axios from 'axios';
 // no such proxy, so VITE_API_URL must point at the deployed backend's /api base, e.g.
 // https://focusos-api.onrender.com/api.
 const baseURL = import.meta.env.VITE_API_URL || '/api';
+// Visible in the browser console on every load — lets you confirm which backend a deployment
+// is actually pointed at without digging through the compiled bundle.
+console.log('[FocusOS] API base URL:', baseURL);
 
 const api = axios.create({ baseURL });
 

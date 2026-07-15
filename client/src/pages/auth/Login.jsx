@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import AuthShell from '../../components/ui/AuthShell';
-import GoogleLoginButton from '../../components/ui/GoogleLoginButton';
 import { login } from '../../services/authApi';
 import { setCredentials } from '../../features/authSlice';
 
@@ -73,12 +72,6 @@ const Login = () => {
           {loading ? 'Signing in…' : 'Sign In'}
         </button>
       </form>
-      <div className="flex items-center gap-3 my-5">
-        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-        <span className="text-xs text-slate-400">OR</span>
-        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-      </div>
-      <GoogleLoginButton />
     </AuthShell>
   );
 };

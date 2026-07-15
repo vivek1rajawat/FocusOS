@@ -3,7 +3,6 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/apiError');
 const { generateAccessToken, generateRandomToken, hashToken } = require('../utils/generateToken');
 const { sendVerificationEmail, sendResetPasswordEmail } = require('../services/email.service');
-const { verifyGoogleToken } = require('../services/googleAuth.service');
 
 const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -53,31 +52,6 @@ const login = asyncHandler(async (req, res) => {
     const yesterday = new Date(Date.now() - 86400000).toDateString();
     user.streak = lastActive === yesterday ? user.streak + 1 : 1;
     user.lastActiveDate = new Date();
-    await user.save();
-  }
-
-  const token = generateAccessToken(user._id);
-  res.json({ success: true, token, user: user.toSafeObject() });
-});
-
-const googleLogin = asyncHandler(async (req, res) => {
-  const { idToken } = req.body;
-  if (!idToken) throw new ApiError(400, 'Google idToken is required');
-
-  const profile = await verifyGoogleToken(idToken);
-
-  let user = await User.findOne({ email: profile.email });
-  if (!user) {
-    user = await User.create({
-      name: profile.name,
-      email: profile.email,
-      googleId: profile.googleId,
-      avatar: profile.avatar,
-      isVerified: true,
-    });
-  } else if (!user.googleId) {
-    user.googleId = profile.googleId;
-    user.isVerified = true;
     await user.save();
   }
 
@@ -157,7 +131,6 @@ const updateMe = asyncHandler(async (req, res) => {
 module.exports = {
   register,
   login,
-  googleLogin,
   verifyEmail,
   forgotPassword,
   resetPassword,

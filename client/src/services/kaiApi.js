@@ -1,5 +1,7 @@
 import api from './api';
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 export const getConversations = () => api.get('/kai/conversations').then((r) => r.data.conversations);
 export const getConversation = (id) => api.get(`/kai/conversations/${id}`).then((r) => r.data.conversation);
 export const deleteConversation = (id) => api.delete(`/kai/conversations/${id}`).then((r) => r.data);
@@ -9,7 +11,7 @@ export const deleteConversation = (id) => api.delete(`/kai/conversations/${id}`)
 export const streamChat = async ({ conversationId, message }, { onToken, onDone, onError }) => {
   try {
     const token = localStorage.getItem('focusos_token');
-    const response = await fetch('/api/kai/chat', {
+    const response = await fetch(`${API_BASE}/kai/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

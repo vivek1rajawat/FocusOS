@@ -1,8 +1,11 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: '/api',
-});
+// In dev, Vite proxies "/api" to the local backend (see vite.config.js). In production there's
+// no such proxy, so VITE_API_URL must point at the deployed backend's /api base, e.g.
+// https://focusos-api.onrender.com/api.
+const baseURL = import.meta.env.VITE_API_URL || '/api';
+
+const api = axios.create({ baseURL });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('focusos_token');

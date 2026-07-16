@@ -28,14 +28,15 @@ const Label = ({ show, children }) => (
   </AnimatePresence>
 );
 
-const Sidebar = ({ onClose }) => {
-  const sidebarOpen = useSelector((s) => s.ui.sidebarOpen);
+const Sidebar = ({ onClose, forceOpen }) => {
+  const sidebarOpenState = useSelector((s) => s.ui.sidebarOpen);
+  const sidebarOpen = forceOpen || sidebarOpenState;
 
   return (
     <motion.aside
       animate={{ width: sidebarOpen ? 256 : 80 }}
       transition={{ duration: 0.25, ease: 'easeInOut' }}
-      className="h-full shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col overflow-hidden"
+      className="h-full w-64 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col overflow-hidden"
     >
       <div className="flex items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2 font-bold text-lg text-indigo-600 dark:text-indigo-400">
@@ -49,35 +50,35 @@ const Sidebar = ({ onClose }) => {
       </div>
 
       <nav className="px-3 space-y-1">
-        <NavLink to="/" end className={linkClass}>
+        <NavLink to="/" end className={linkClass} onClick={onClose}>
           <LayoutDashboard size={18} className="shrink-0" />
           <Label show={sidebarOpen}>Dashboard</Label>
         </NavLink>
-        <NavLink to="/kai" className={linkClass}>
+        <NavLink to="/kai" className={linkClass} onClick={onClose}>
           <Sparkles size={18} className="shrink-0" />
           <Label show={sidebarOpen}>KAI</Label>
         </NavLink>
-        <NavLink to="/tasks" className={linkClass}>
+        <NavLink to="/tasks" className={linkClass} onClick={onClose}>
           <ListChecks size={18} className="shrink-0" />
           <Label show={sidebarOpen}>My Tasks</Label>
         </NavLink>
-        <NavLink to="/goals" className={linkClass}>
+        <NavLink to="/goals" className={linkClass} onClick={onClose}>
           <Target size={18} className="shrink-0" />
           <Label show={sidebarOpen}>Goals</Label>
         </NavLink>
-        <NavLink to="/calendar" className={linkClass}>
+        <NavLink to="/calendar" className={linkClass} onClick={onClose}>
           <CalendarDays size={18} className="shrink-0" />
           <Label show={sidebarOpen}>Calendar</Label>
         </NavLink>
-        <NavLink to="/notes" className={linkClass}>
+        <NavLink to="/notes" className={linkClass} onClick={onClose}>
           <NotebookPen size={18} className="shrink-0" />
           <Label show={sidebarOpen}>Notes</Label>
         </NavLink>
-        <NavLink to="/analytics" className={linkClass}>
+        <NavLink to="/analytics" className={linkClass} onClick={onClose}>
           <BarChart3 size={18} className="shrink-0" />
           <Label show={sidebarOpen}>Analytics</Label>
         </NavLink>
-        <NavLink to="/settings" className={linkClass}>
+        <NavLink to="/settings" className={linkClass} onClick={onClose}>
           <Settings size={18} className="shrink-0" />
           <Label show={sidebarOpen}>Settings</Label>
         </NavLink>

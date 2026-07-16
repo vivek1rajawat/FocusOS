@@ -131,7 +131,7 @@ const TaskBoard = () => {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
           {COLUMNS.map((c) => (
             <KanbanColumn
               key={c.id}

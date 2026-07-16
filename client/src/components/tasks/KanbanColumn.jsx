@@ -7,7 +7,7 @@ const KanbanColumn = ({ status, label, tasks, onTaskClick }) => {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
-    <div className={`w-72 shrink-0 rounded-2xl p-3 bg-slate-100/70 dark:bg-slate-900/50 ${isOver ? 'ring-2 ring-indigo-400' : ''}`}>
+    <div className={`w-[85vw] max-w-72 sm:w-72 shrink-0 snap-center rounded-2xl p-3 bg-slate-100/70 dark:bg-slate-900/50 ${isOver ? 'ring-2 ring-indigo-400' : ''}`}>
       <div className="flex items-center justify-between mb-3 px-1">
         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${STATUS_COLORS[status]}`}>{label}</span>
         <span className="text-xs text-slate-400">{tasks.length}</span>

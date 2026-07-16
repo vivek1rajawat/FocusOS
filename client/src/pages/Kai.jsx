@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import toast from 'react-hot-toast';
-import { Sparkles, Plus, Trash2, Send, Wand2, CheckCircle2, Download } from 'lucide-react';
+import { Sparkles, Plus, Trash2, Send, Wand2, CheckCircle2, Download, Menu, X } from 'lucide-react';
 import { getConversations, getConversation, deleteConversation, streamChat } from '../services/kaiApi';
 import { formatDistanceToNow } from '../utils/timeAgo';
 import { exportMarkdownToPdf } from '../utils/exportPdf';
@@ -37,6 +37,7 @@ const Kai = () => {
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -113,22 +114,47 @@ const Kai = () => {
     ? [...messages, { role: 'assistant', content: streamingText, streaming: true }]
     : messages;
 
+  const activeTitle = id ? conversations.find((c) => c._id === id)?.title : null;
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] -m-4 md:-m-6">
-      <aside className="w-64 shrink-0 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900">
-        <div className="p-3">
+    <div className="flex h-[calc(100vh-4rem)] -m-3 sm:-m-4 md:-m-6 relative overflow-hidden">
+      {historyOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setHistoryOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 transition-transform duration-200 md:static md:z-auto md:w-64 md:max-w-none md:translate-x-0 md:shrink-0 ${
+          historyOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-3 flex items-center gap-2">
           <button
-            onClick={() => navigate('/kai')}
-            className="btn-primary w-full !py-2 text-sm"
+            onClick={() => {
+              navigate('/kai');
+              setHistoryOpen(false);
+            }}
+            className="btn-primary flex-1 !py-2 text-sm"
           >
             <Plus size={16} /> New Chat
+          </button>
+          <button
+            onClick={() => setHistoryOpen(false)}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden shrink-0"
+          >
+            <X size={18} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-2 space-y-1">
           {conversations.map((c) => (
             <div
               key={c._id}
-              onClick={() => navigate(`/kai/${c._id}`)}
+              onClick={() => {
+                navigate(`/kai/${c._id}`);
+                setHistoryOpen(false);
+              }}
               className={`group flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer text-sm ${
                 id === c._id
                   ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300'
@@ -152,6 +178,16 @@ const Kai = () => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
+        <div className="md:hidden flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 px-3 py-2.5 shrink-0">
+          <button
+            onClick={() => setHistoryOpen(true)}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0"
+          >
+            <Menu size={18} />
+          </button>
+          <p className="text-sm font-medium truncate flex-1">{activeTitle || 'New chat'}</p>
+        </div>
+
         <div className="flex-1 overflow-y-auto">
           {displayMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4">
@@ -171,7 +207,7 @@ const Kai = () => {
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+            <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
               {displayMessages.map((m, i) => (
                 <MessageBubble
                   key={i}
@@ -184,7 +220,7 @@ const Kai = () => {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="border-t border-slate-200 dark:border-slate-800 p-4">
+        <form onSubmit={handleSubmit} className="border-t border-slate-200 dark:border-slate-800 p-3 sm:p-4 shrink-0">
           <div className="max-w-3xl mx-auto flex gap-2">
             <input
               className="input"
@@ -226,7 +262,7 @@ const MessageBubble = ({ message, precedingUserText }) => {
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[85%] ${isUser ? '' : 'w-full'}`}>
+      <div className={`max-w-[92%] sm:max-w-[85%] ${isUser ? '' : 'w-full'}`}>
         {!isUser && message.toolCalls?.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-1.5">
             {message.toolCalls.map((tc, i) => (
@@ -249,7 +285,17 @@ const MessageBubble = ({ message, precedingUserText }) => {
           {isUser ? (
             message.content
           ) : message.content ? (
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+              components={{
+                table: ({ node, ...props }) => (
+                  <div className="overflow-x-auto">
+                    <table {...props} />
+                  </div>
+                ),
+              }}
+            >
               {message.content}
             </ReactMarkdown>
           ) : (

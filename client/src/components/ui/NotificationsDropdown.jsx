@@ -18,7 +18,7 @@ const NotificationsDropdown = ({ onClose }) => {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-80 card p-3 z-30 max-h-96 overflow-y-auto">
+    <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1.5rem)] card p-3 z-30 max-h-96 overflow-y-auto">
       <div className="flex items-center justify-between mb-2">
         <p className="font-medium text-sm">Notifications</p>
         <button onClick={handleReadAll} className="text-xs text-indigo-500">

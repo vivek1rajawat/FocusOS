@@ -56,7 +56,7 @@ const CalendarView = () => {
               <button
                 key={day.toISOString()}
                 onClick={() => setSelected(day)}
-                className={`h-20 rounded-lg p-1 text-left border transition-colors ${
+                className={`h-14 sm:h-20 rounded-lg p-1 text-left border transition-colors ${
                   isSameMonth(day, cursor) ? 'border-slate-200 dark:border-slate-800' : 'border-transparent opacity-40'
                 } ${selected && isSameDay(selected, day) ? 'ring-2 ring-indigo-500' : ''} hover:bg-slate-50 dark:hover:bg-slate-800/60`}
               >

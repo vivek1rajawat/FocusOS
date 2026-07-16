@@ -30,7 +30,7 @@ const Register = () => {
   return (
     <AuthShell
       title="Create your account"
-      subtitle="Every account is its own private space — no admin, no roles."
+      subtitle="Every account is its own private space, no admin, no roles."
       footer={
         <>
           Already have an account?{' '}

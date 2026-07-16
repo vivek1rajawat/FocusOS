@@ -8,7 +8,11 @@ import toast from 'react-hot-toast';
 import { Sparkles, Plus, Trash2, Send, Wand2, CheckCircle2, Download } from 'lucide-react';
 import { getConversations, getConversation, deleteConversation, streamChat } from '../services/kaiApi';
 import { formatDistanceToNow } from '../utils/timeAgo';
-import { exportElementToPdf } from '../utils/exportPdf';
+import { exportMarkdownToPdf } from '../utils/exportPdf';
+
+// Only offer a PDF download when the user actually asked for one in the message that
+// prompted this reply — not on every long response.
+const DOWNLOAD_INTENT_RE = /\b(pdf|download|export|notes?)\b/i;
 
 const SUGGESTIONS = [
   'Build a Food Delivery App',
@@ -169,7 +173,11 @@ const Kai = () => {
           ) : (
             <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
               {displayMessages.map((m, i) => (
-                <MessageBubble key={i} message={m} />
+                <MessageBubble
+                  key={i}
+                  message={m}
+                  precedingUserText={displayMessages[i - 1]?.role === 'user' ? displayMessages[i - 1].content : ''}
+                />
               ))}
               <div ref={bottomRef} />
             </div>
@@ -196,20 +204,19 @@ const Kai = () => {
   );
 };
 
-const MessageBubble = ({ message }) => {
+const MessageBubble = ({ message, precedingUserText }) => {
   const isUser = message.role === 'user';
-  const contentRef = useRef(null);
   const [exporting, setExporting] = useState(false);
 
-  const isBlueprint = !isUser && !message.streaming && (message.content?.length || 0) > 300;
+  const wantsDownload =
+    !isUser && !message.streaming && Boolean(message.content) && DOWNLOAD_INTENT_RE.test(precedingUserText || '');
 
-  const handleDownloadPdf = async () => {
-    if (!contentRef.current) return;
+  const handleDownloadPdf = () => {
     setExporting(true);
     try {
-      const heading = message.content.match(/^#{1,2}\s+(.+)$/m)?.[1] || 'FocusOS Blueprint';
+      const heading = message.content.match(/^#{1,2}\s+(.+)$/m)?.[1] || 'FocusOS Notes';
       const filename = `${heading.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-')}.pdf`;
-      await exportElementToPdf(contentRef.current, filename);
+      exportMarkdownToPdf(message.content, filename, heading);
     } catch (err) {
       toast.error('Could not generate the PDF — please try again.');
     } finally {
@@ -233,7 +240,6 @@ const MessageBubble = ({ message }) => {
           </div>
         )}
         <div
-          ref={contentRef}
           className={
             isUser
               ? 'bg-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-2.5 text-sm'
@@ -254,7 +260,7 @@ const MessageBubble = ({ message }) => {
             </span>
           )}
         </div>
-        {isBlueprint && (
+        {wantsDownload && (
           <button
             onClick={handleDownloadPdf}
             disabled={exporting}

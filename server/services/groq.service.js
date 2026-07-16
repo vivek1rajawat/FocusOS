@@ -132,6 +132,26 @@ Critical rules for tool use:
 - Only call tools through the real function-calling mechanism you're given. Never write a tool call out as text (e.g.
   "<function=...>" or similar) — if you can't call a tool in a given turn, just describe what you'd do in plain language instead.`;
 
+// Some smaller/fallback models occasionally ignore the "never write a tool call as text"
+// instruction and emit it as literal `<function=name>{...}</function>` text in `content`
+// instead of populating the real `tool_calls` field. Rather than just hoping the prompt
+// prevents this, detect it and execute it for real so the user gets the actual result
+// instead of raw pseudo-syntax leaking into the chat.
+const PSEUDO_FUNCTION_RE = /<function=([a-zA-Z_][\w]*)>([\s\S]*?)<\/function>/g;
+
+const extractPseudoToolCalls = (text) => {
+  if (!text) return [];
+  return [...text.matchAll(PSEUDO_FUNCTION_RE)].map(([, name, rawArgs], idx) => {
+    let args = {};
+    try {
+      args = JSON.parse(rawArgs);
+    } catch {
+      args = {};
+    }
+    return { id: `pseudo_${idx}_${Date.now()}`, function: { name, arguments: JSON.stringify(args) } };
+  });
+};
+
 // history: [{role: 'user'|'assistant', content}], oldest first (no system prompt included)
 // onToken(delta): called with each streamed text chunk of the final answer
 // Returns { content: fullFinalText, toolCalls: [{name, summary}] }
@@ -147,13 +167,23 @@ const runAgentTurn = async ({ userId, history, onToken }) => {
     const completion = await createChatCompletion(client, { messages, tools: TOOL_DEFINITIONS });
     const msg = completion.choices[0].message;
 
-    if (!msg.tool_calls || msg.tool_calls.length === 0) {
+    let pendingToolCalls = msg.tool_calls;
+    let visibleContent = msg.content;
+    if ((!pendingToolCalls || pendingToolCalls.length === 0) && msg.content) {
+      const pseudoCalls = extractPseudoToolCalls(msg.content);
+      if (pseudoCalls.length) {
+        pendingToolCalls = pseudoCalls;
+        visibleContent = msg.content.replace(PSEUDO_FUNCTION_RE, '').trim() || null;
+      }
+    }
+
+    if (!pendingToolCalls || pendingToolCalls.length === 0) {
       finalMessage = msg;
       break;
     }
 
-    messages.push(msg);
-    for (const call of msg.tool_calls) {
+    messages.push({ role: 'assistant', content: visibleContent, tool_calls: pendingToolCalls });
+    for (const call of pendingToolCalls) {
       let args = {};
       try {
         args = JSON.parse(call.function.arguments || '{}');
@@ -183,6 +213,13 @@ const runAgentTurn = async ({ userId, history, onToken }) => {
   if (!finalMessage) {
     const completion = await createChatCompletion(client, { messages });
     finalMessage = completion.choices[0].message;
+  }
+
+  // Strip any pseudo function-call syntax the model still slipped into its final answer —
+  // at this point we deliberately don't execute it (avoids an unbounded tool-call loop), we
+  // just make sure it never reaches the user as raw text.
+  if (finalMessage.content) {
+    finalMessage = { ...finalMessage, content: finalMessage.content.replace(PSEUDO_FUNCTION_RE, '').trim() };
   }
 
   // Deliberately NOT re-issuing a second (streamed) completion here: an earlier version did,
